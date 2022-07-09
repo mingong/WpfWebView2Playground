@@ -1,0 +1,189 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./pure-min.css" media="screen" title="no title" charset="utf-8">
+    <title>editor</title>
+    <style media="screen">
+      body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      form {
+        height: 100%;
+      }
+
+      button {
+        height: 40px;
+      }
+
+      textarea {
+        height: calc(100% - 40px);
+        font-size: 18px;
+        font-family: "Noto Sans Mono CJK TC", "Noto Sans Mono CJK TC", monospace;
+        white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <form class="pure-form" name="EditorForm">
+        <textarea id="editor" class="pure-input-1" aria-label="textarea" name="editor"></textarea>
+        <button type="submit" class="pure-button pure-input-1 pure-button-primary" onclick="saveText(); return false;">Save</button>
+    </form>
+    <script type="text/javascript">
+        let isSave = true; //是否保存
+        let title = document.title;
+
+        /*
+        let tagTitle = " " + "*" + " ";
+        */
+        let tagTitle = " " + "*";
+        
+        editor.addEventListener("input", (e) => {
+            document.title = title + tagTitle;
+            
+            isSave = false;
+            
+            updateTitle();
+        });
+
+        function updateTitle() {
+            window.chrome.webview.hostObjects.webview2.updateTitle();
+        }
+
+        function exit() {
+            window.chrome.webview.hostObjects.webview2.exit();
+        }
+        
+        function wen() {
+            var response;
+            
+            if (isSave) {
+                response = window.chrome.webview.hostObjects.sync.webview2.wpfConfirm("Close the current file and create a new one?");
+                
+                if (response.length > 0) {
+                    wenText();
+                }
+            } else {
+                response = window.chrome.webview.hostObjects.sync.webview2.wpfConfirm("Unsaved changes. Continue without saving?");
+                
+                if (response.length > 0) {
+                    wenText();
+                }
+            }
+        }
+        
+        function open() {
+            if (isSave) {
+                openText();
+            } else {
+                var response = window.chrome.webview.hostObjects.sync.webview2.wpfConfirm("Unsaved changes. Continue without saving?");
+                
+                if (response.length > 0) {
+                    openText();
+                }
+            }
+        }
+        
+        function action() {
+            if (isSave) {
+                exit();
+            } else {
+                var response = window.chrome.webview.hostObjects.sync.webview2.wpfConfirm("Unsaved changes. Continue without saving?");
+                
+                if (response.length > 0) {
+                    exit();
+                }
+            }
+        }
+        
+        function csCallJs1() {
+            window.chrome.webview.hostObjects.webview2.wpfAlert("Call JavaScript from C#");
+        }
+        
+        async function callCs1() {
+            // .NET object reference (async)
+            var msg = await window.chrome.webview.hostObjects.webview2.stringProp;
+            
+            /*
+            alert(msg);
+            
+            */
+            window.chrome.webview.hostObjects.webview2.wpfAlert(msg);
+        }
+
+        function callCs2() {
+            window.chrome.webview.hostObjects.webview2.showHelloWebView2();
+        }
+
+        function wenText() {
+            window.chrome.webview.hostObjects.webview2.wen();
+            
+            editor.value = "";
+            
+            isSave = true;
+        }
+
+        function openText(/*path*/) {
+            /*
+            editor.dataset.path = path;
+            
+            */
+            var msgObject = window.chrome.webview.hostObjects.sync.webview2.open();
+            
+            var path = msgObject.path;
+            var content = msgObject.content;
+            
+            if (path.length > 0/* && content.length > 0*/) {
+                editor.value = content;
+
+                /*
+                editor.scrollTop = editor.scrollHeight;
+                
+                */
+                // Setting a value to textarea moves the input cursor to the end. We want the selection at the beginning.
+                editor.setSelectionRange(0, 0);
+
+                isSave = true;
+            }
+        }
+
+        function save() {
+            saved_Text(window.chrome.webview.hostObjects.sync.webview2.saveText());
+        }
+        
+        // Upon saving Text
+        function saved_Text(path) {
+            if (path.length > 0) {
+                var content = editor.value;
+                
+                window.chrome.webview.hostObjects.webview2.save_(content);
+                
+                isSave = true;
+            }
+        }
+
+        function saveAs() {
+            // 
+
+            saved_Text(window.chrome.webview.hostObjects.sync.webview2.saveTextAs());
+        }
+
+        function saveText() {
+            save();
+            
+            document.EditorForm.editor.focus();
+        }
+        
+        window.onload = function () {
+            window.chrome.webview.hostObjects.webview2.setFocus();
+            document.EditorForm.editor.focus();
+        };
+        /*
+    
+        */
+    </script>
+  </body>
+</html>
